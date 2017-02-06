@@ -1,3 +1,12 @@
+ALL WITH SUDO SU
+
 Fix on GY86 librari:
 On file BMA180.cpp change #include "bma180.H" to #include "BMA180.h"
+
+
+Add GY86 Librarie on Arduino IDE, or copy folder on libraries folder
+
+
+-
+
 	
