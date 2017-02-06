@@ -1,0 +1,3 @@
+Fix on GY86 librari:
+On file BMA180.cpp change #include "bma180.H" to #include "BMA180.h"
+	
