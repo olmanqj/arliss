@@ -38,7 +38,14 @@
 /////////////////////////////////////////////////
 ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = launch, 
 
+//Altitude variables
+float relative_altitude;
+float absolute_altitude;
+float ground_altitude;
+float max_altitude;
 
+
+float press, temp;
 
 //////////////////////////////////////////////////
 //  FUNCTIONS
@@ -49,8 +56,9 @@ void setup()
   Serial.begin(115200);
   delay(1000);
   
-  
+  Serial.println("\nSetting Barometer...\n");
   setup_barometer();
+  Serial.println("\nBarometer Stabilized!!");
   
   current_rover_state = pre_launch;
 
@@ -65,7 +73,7 @@ void loop()
   ////////////////////////Barometro//////////////////////////
   //Temp
   Serial.print(" temp: ");
-  float temperature = barometer.getTemperature(MS561101BA_OSR_4096);
+  float temperature = get_temperature();
   if(temperature) {
     temp = temperature;
   }
@@ -74,13 +82,13 @@ void loop()
   
   //Press
   Serial.print(" degC pres: ");
-  press = barometer.getPressure(MS561101BA_OSR_4096);
-  if(press!=NULL) {
-    push_pressure(press);
+  float pressure = get_pressure();
+  if(pressure) {
+    press = pressure;
   }
-  press = get_average(pressure_buffer, PRESSURE_BUFFER_SIZE);
   Serial.print(press);
   
+
   //Alt
   Serial.print(" mbar altitude: ");
   Serial.print(get_altitude(press, temp));
