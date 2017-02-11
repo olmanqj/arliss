@@ -14,11 +14,11 @@
 //  DEF
 ////////////////////////////////////////////////
 
-enum rover_state {
+typedef enum {
     pre_launch,
     ascent,
     descent,
     navigation,
     closing_up,
     end_navigation
-} rover_state;
+} ROVER_STATE;
