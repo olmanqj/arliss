@@ -50,9 +50,9 @@ void setup()
   Serial.begin(115200);
   delay(1000);
   
-  Serial.println("\nSetting Barometer...");
+  Serial.println("\nSetting Barometer");
   setup_barometer();
-  Serial.println("Barometer Ready!!");
+  Serial.println("\nBarometer Ready!!");
   
   Serial.print("\nGround altitude: ");
   Serial.println(ground_altitude);

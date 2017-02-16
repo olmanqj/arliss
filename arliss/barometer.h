@@ -74,19 +74,24 @@ float get_average(float * buff, int size) {
 // Waits until the delta between two barometer reads (every read frequency) is less than the stabilization factor
 void wait_for_barometer_stabilization()
 {
-	int read_frequency = 10;
-	float stabilization_factor = 0.01;
+	#define READ_FREQUENCY 250
+	#define STABILIZATION_FACTOR 0.05
 
-        float last_compared_altitude; //Altitude before x reads (x = read_frequency)
-	float delta_altitude = 99999;
+        
+        
+        float realtive_altitude = 99999; 
+        
+
         unsigned char read_counter;
-	while(delta_altitude > stabilization_factor)
+	while(realtive_altitude > STABILIZATION_FACTOR)
 	{
-          last_compared_altitude = get_altitude();
+          ground_altitude = get_altitude();
+          
           read_counter = 0;
-	  while(read_counter < read_frequency)
-          {
+	  while(read_counter < READ_FREQUENCY)
+          {           
             read_counter ++;
+            get_altitude();            
             //Serial.print ("Temp: ");
             //Serial.print (get_temperature());      
             //Serial.print (", Press: ");
@@ -95,10 +100,11 @@ void wait_for_barometer_stabilization()
             //Serial.print (get_altitude());
             //Serial.print ("\n");            
           }	          
-          delta_altitude= (get_altitude() - last_compared_altitude); // compare last_compared_altitude with altitude now           
-          if(delta_altitude < 0) delta_altitude = delta_altitude * -1;  // Absolute value         
-	  //Serial.print("\ndelta alt:");
-	  //Serial.println(delta_altitude);
+          realtive_altitude = ground_altitude - get_altitude();
+          if(realtive_altitude < 0) realtive_altitude = realtive_altitude * -1;  // Absolute value         
+	  //Serial.print("\nrealtive_altitude:");
+	  //Serial.println(realtive_altitude);
+          Serial.print (".");
 	}
 }
 
