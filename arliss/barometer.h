@@ -2,7 +2,7 @@
 // Barometer.h
 //
 // API
-// float get_pressure()
+// 
 //
 //
 // 
@@ -33,6 +33,7 @@
 // For Barometer
 MS561101BA barometer = MS561101BA();
 float pressure_buffer[PRESSURE_BUFFER_SIZE];
+float last_temperature;
 int pressure_counter=0;
 const float sea_press = 1013.25;
 
@@ -69,24 +70,15 @@ float get_average(float * buff, int size) {
 // Waits until the delta between two barometer reads (every read frequency) is less than the stabilization factor
 void wait_for_barometer_stabilization()
 {
-	int read_frequency = 100;
-	float stabilization_factor = 0.3;
+	int read_frequency = 10;
+	float stabilization_factor = 0.001;
 	
         // Wait until read some data
         float temp_pressure = get_pressure();
         float temp_temperature = get_temperature();
-        
-        while(temp_pressure ==NULL)
-        {
-          Serial.print ("Press: ");
-          Serial.print (temp_pressure);
-          Serial.print (", Temp: ");
-          Serial.print (temp_temperature);
-          Serial.print ("\n");
-          temp_pressure = get_pressure();
-          temp_temperature = get_temperature();
-        }
-
+        float temp_altitude = get_altitude(temp_pressure, temp_temperature);//<<<<<<<<<<<<<<<<<<<
+       
+       
         //Wait until read some real data
         float last_compared_pressure;
 	float delta_pressure = 99999;
@@ -98,10 +90,19 @@ void wait_for_barometer_stabilization()
 	  while(read_counter < read_frequency)
           {
             temp_pressure = get_pressure();
+            temp_temperature = get_temperature();
             read_counter ++;
+            Serial.print ("Temp: ");
+            Serial.print (temp_temperature);      
+            Serial.print (", Press: ");
+            Serial.print (temp_pressure);            
+            Serial.print (", Alt: ");
+            Serial.print (get_altitude(temp_pressure, temp_temperature));
+            Serial.print ("\n");
+            
           }	
           delta_pressure = abs(last_compared_pressure - temp_pressure);
-	  Serial.print("delta p:");
+	  Serial.print("\ndelta p:");
 	  Serial.println(delta_pressure);
 
 	}
@@ -109,14 +110,31 @@ void wait_for_barometer_stabilization()
 
 void setup_barometer()
 {
- barometer.init(MS561101BA_ADDR_CSB_LOW); //CSB pin is connected to GND (not even connected(?)) 
+  barometer.init(MS561101BA_ADDR_CSB_LOW); //CSB pin is connected to GND (not even connected(?)) 
   delay(100);
  
-  // populate pressure_buffer before starting loop
+  //Populate pressure_buffer before starting loop
   for(int i=0; i<PRESSURE_BUFFER_SIZE; i++) {
-    pressure_buffer[i] = barometer.getPressure(MS561101BA_OSR_4096);
+    
+    float temp_press = barometer.getPressure(MS561101BA_OSR_4096);
+    // If barometer read is NULL, read until is not NULL
+    while(temp_press == NULL )
+    {
+      temp_press = barometer.getPressure(MS561101BA_OSR_4096);
+    }    
+    pressure_buffer[i] = temp_press;// barometer.getPressure(MS561101BA_OSR_4096);  
   }
   
+  // Populate last readed temperature
+  while(last_temperature==NULL || last_temperature == -244.83 )
+  {
+    last_temperature = barometer.getTemperature(MS561101BA_OSR_4096);
+    Serial.print ("Last Temp: ");
+    Serial.println (last_temperature);
+    delay(100);
+  }
+  
+  //Wait until the pressure is not changing
   wait_for_barometer_stabilization();
 	
 }
@@ -124,11 +142,19 @@ void setup_barometer()
 
 
 //////////////////////// TEMPERATURE FUNCTIONS  ////////////////////////////////////////////
-
-// Wrapper for getTemperature
 float get_temperature()
 {
-  return barometer.getTemperature(MS561101BA_OSR_4096);
+  float temp_temperature = barometer.getTemperature(MS561101BA_OSR_4096);
+  delay(100);
+  //Serial.print ("Readed Temp: ");
+  //Serial.println (temp_temperature);
+  // If impossible to read temperature, return last readed temperature
+  if( temp_temperature ==NULL || temp_temperature == -244.83 )
+  {
+   return last_temperature;
+  }
+  last_temperature = temp_temperature;
+  return temp_temperature;
 }
 
 
@@ -152,12 +178,12 @@ void push_pressure(float val) {
 
 float get_pressure()
 {
-  return barometer.getPressure(MS561101BA_OSR_4096);
-  /*
+  //return barometer.getPressure(MS561101BA_OSR_4096);
+  
   float temp_press = barometer.getPressure(MS561101BA_OSR_4096);
   if(temp_press!=NULL) {
     push_pressure(temp_press);
   }
   return get_average(pressure_buffer, PRESSURE_BUFFER_SIZE);
-  */
+  
 }

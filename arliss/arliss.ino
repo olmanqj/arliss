@@ -53,7 +53,7 @@ float press, temp;
 void setup()
 {
   Wire.begin();
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(1000);
   
   Serial.println("\nSetting Barometer...\n");
@@ -72,6 +72,8 @@ void loop()
   
   ////////////////////////Barometro//////////////////////////
   //Temp
+  
+  
   Serial.print(" temp: ");
   float temperature = get_temperature();
   if(temperature) {
@@ -93,7 +95,6 @@ void loop()
   Serial.print(" mbar altitude: ");
   Serial.print(get_altitude(press, temp));
   Serial.println(" m");
-  //delay(1000);
   //////////////////////////////////////////////////////
   
 
