@@ -37,6 +37,10 @@ float last_temperature;
 int pressure_counter=0;
 const float sea_press = 1013.25;
 
+//Altitude variables
+float ground_altitude;
+float max_altitude;
+
 
 
 
@@ -48,7 +52,7 @@ const float sea_press = 1013.25;
 
 float get_pressure();
 float get_temperature();
-float get_altitude(float press, float temp);
+float get_altitude();
 
 
 /////////////////// GENERAL FUNCTION  //////////////////////////////
@@ -71,40 +75,30 @@ float get_average(float * buff, int size) {
 void wait_for_barometer_stabilization()
 {
 	int read_frequency = 10;
-	float stabilization_factor = 0.001;
-	
-        // Wait until read some data
-        float temp_pressure = get_pressure();
-        float temp_temperature = get_temperature();
-        float temp_altitude = get_altitude(temp_pressure, temp_temperature);//<<<<<<<<<<<<<<<<<<<
-       
-       
-        //Wait until read some real data
-        float last_compared_pressure;
-	float delta_pressure = 99999;
+	float stabilization_factor = 0.01;
+
+        float last_compared_altitude; //Altitude before x reads (x = read_frequency)
+	float delta_altitude = 99999;
         unsigned char read_counter;
-	while(delta_pressure > stabilization_factor)
+	while(delta_altitude > stabilization_factor)
 	{
-          last_compared_pressure = get_pressure();
+          last_compared_altitude = get_altitude();
           read_counter = 0;
 	  while(read_counter < read_frequency)
           {
-            temp_pressure = get_pressure();
-            temp_temperature = get_temperature();
             read_counter ++;
-            Serial.print ("Temp: ");
-            Serial.print (temp_temperature);      
-            Serial.print (", Press: ");
-            Serial.print (temp_pressure);            
-            Serial.print (", Alt: ");
-            Serial.print (get_altitude(temp_pressure, temp_temperature));
-            Serial.print ("\n");
-            
-          }	
-          delta_pressure = abs(last_compared_pressure - temp_pressure);
-	  Serial.print("\ndelta p:");
-	  Serial.println(delta_pressure);
-
+            //Serial.print ("Temp: ");
+            //Serial.print (get_temperature());      
+            //Serial.print (", Press: ");
+            //Serial.print (get_pressure());            
+            //Serial.print (", Alt: ");
+            //Serial.print (get_altitude());
+            //Serial.print ("\n");            
+          }	          
+          delta_altitude= (get_altitude() - last_compared_altitude); // compare last_compared_altitude with altitude now           
+          if(delta_altitude < 0) delta_altitude = delta_altitude * -1;  // Absolute value         
+	  //Serial.print("\ndelta alt:");
+	  //Serial.println(delta_altitude);
 	}
 }
 
@@ -129,14 +123,16 @@ void setup_barometer()
   while(last_temperature==NULL || last_temperature == -244.83 )
   {
     last_temperature = barometer.getTemperature(MS561101BA_OSR_4096);
-    Serial.print ("Last Temp: ");
-    Serial.println (last_temperature);
+    //Serial.print ("Last Temp: ");
+    //Serial.println (last_temperature);
     delay(100);
   }
   
   //Wait until the pressure is not changing
   wait_for_barometer_stabilization();
-	
+  //when ready set ground altitudw
+  ground_altitude = get_altitude();	
+  
 }
 
 
@@ -145,11 +141,11 @@ void setup_barometer()
 float get_temperature()
 {
   float temp_temperature = barometer.getTemperature(MS561101BA_OSR_4096);
-  delay(100);
+  //delay(100);
   //Serial.print ("Readed Temp: ");
   //Serial.println (temp_temperature);
   // If impossible to read temperature, return last readed temperature
-  if( temp_temperature ==NULL || temp_temperature == -244.83 )
+  if( temp_temperature ==NULL || temp_temperature < (-244.8) )  // -244.83 its an error output from barometer whenn reads anything
   {
    return last_temperature;
   }
@@ -160,7 +156,9 @@ float get_temperature()
 
 
 ///////////////////////// ATLTITUDE FUNCTIONS /////////////////////////////////////////////////
-float get_altitude(float press, float temp) {
+float get_altitude() {
+  float press =  get_pressure();
+  float temp = get_temperature();
   //return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
   return ((pow((SEA_PRESSURE / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 }
@@ -181,6 +179,8 @@ float get_pressure()
   //return barometer.getPressure(MS561101BA_OSR_4096);
   
   float temp_press = barometer.getPressure(MS561101BA_OSR_4096);
+  //Serial.print("\nReaded press: ");
+  //Serial.println(temp_press);
   if(temp_press!=NULL) {
     push_pressure(temp_press);
   }

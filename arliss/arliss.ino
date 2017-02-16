@@ -38,12 +38,6 @@
 /////////////////////////////////////////////////
 ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = launch, 
 
-//Altitude variables
-float relative_altitude;
-float absolute_altitude;
-float ground_altitude;
-float max_altitude;
-
 
 float press, temp;
 
@@ -53,24 +47,24 @@ float press, temp;
 void setup()
 {
   Wire.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000);
   
-  Serial.println("\nSetting Barometer...\n");
+  Serial.println("\nSetting Barometer...");
   setup_barometer();
-  Serial.println("\nBarometer Stabilized!!");
+  Serial.println("Barometer Ready!!");
+  
+  Serial.print("\nGround altitude: ");
+  Serial.println(ground_altitude);
   
   current_rover_state = pre_launch;
 
 }
 
 
-void loop()
+void print_barometer_data()
 {
-  //Serial.print("Current rover state:");
-  //Serial.println(current_rover_state);
-  
-  ////////////////////////Barometro//////////////////////////
+   ////////////////////////Barometro//////////////////////////
   //Temp
   
   
@@ -90,14 +84,34 @@ void loop()
   }
   Serial.print(press);
   
-
+  float temp_alt = get_altitude() ;
   //Alt
   Serial.print(" mbar altitude: ");
-  Serial.print(get_altitude(press, temp));
-  Serial.println(" m");
-  //////////////////////////////////////////////////////
+  Serial.print(temp_alt);
+  Serial.print(" m ");
   
+  Serial.print(", Relative Altitude: ");
+  Serial.println(ground_altitude - temp_alt );
+  //////////////////////////////////////////////////////
 
+}
+
+
+void loop()
+{
+  //Serial.print("Current rover state:");
+  //Serial.println(current_rover_state);
+  print_barometer_data();
+  
+  
+  //float temp_alt = get_altitude() ;
+  //Serial.print("Ground Altitude: ");
+  //Serial.print(ground_altitude );
+  //Serial.print(", Absolute Altitude: ");
+  //Serial.print(temp_alt);
+  //Serial.print(", Relative Altitude: ");
+  //Serial.println(ground_altitude - temp_alt );
+  
 }
 
 
