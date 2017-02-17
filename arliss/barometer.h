@@ -166,7 +166,11 @@ float get_altitude() {
   float press =  get_pressure();
   float temp = get_temperature();
   //return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
-  return ((pow((SEA_PRESSURE / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+  
+  float temp_altitude = ((pow((SEA_PRESSURE / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+  
+  if(temp_altitude > max_altitude) max_altitude = temp_altitude;  // Set Max altitude when needed
+  return temp_altitude;
 }
 
 

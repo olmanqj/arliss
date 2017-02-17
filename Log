@@ -7,14 +7,4 @@ On file BMA180.cpp change #include "bma180.H" to #include "BMA180.h"
 Add GY86 Librarie on Arduino IDE, or copy folder on libraries folder
 
 
--------------------------------------
-
-A Jacha:
-
-1. 
-	apt-get install gcc-avr avr-libc avrdude
-
-Hint: El manual de las librería C se encuentra en /usr/share/doc/avr-libc/avr-libc-user-manual/index.html
-
-
-2. 	
+------------------------------------

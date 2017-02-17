@@ -107,7 +107,7 @@ void loop()
   //Serial.print("Current rover state:");
   //Serial.println(current_rover_state);
   
-  //print_barometer_data();
+  print_barometer_data();
   
   // Execute current rover state corresponding routine
   (*rover_state_routines[current_rover_state])(); 
@@ -119,7 +119,20 @@ void loop()
 // During the pre launch: wait until launch detection
 void *pre_launch_routine()
 {
+  
   Serial.println("Rove_status: pre_launch");
+  
+  float temp_alt = get_altitude() ;
+  //Alt
+  Serial.print(" mbar altitude: ");
+  Serial.print(temp_alt);
+  Serial.print(" m ");
+  
+  Serial.print(", Relative Altitude: ");
+  Serial.print(ground_altitude - temp_alt );
+  
+  Serial.print(", Max Altitude: ");
+  Serial.println(max_altitude );
   
   
   //current_rover_state = ascent;
