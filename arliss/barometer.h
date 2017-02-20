@@ -19,7 +19,7 @@
 /////////////////////////////////////////////////
 //  DEFINES
 ////////////////////////////////////////////////
-//#define DEBUG
+#define DEBUG
 
 // For Barometer
 #define PRESSURE_BUFFER_SIZE 32  
@@ -65,7 +65,30 @@ float get_average(float * buff, int size) {
   return sum / size;
 }
 
-
+void print_barometer_data()
+{
+   ////////////////////////Barometro//////////////////////////
+  //Temp
+  Serial.print(" temp: ");
+  Serial.print(get_temperature());
+  
+  
+  //Press
+  Serial.print(", pres: ");
+  Serial.print(get_pressure());
+  
+  //Alt
+  float temp_alt = get_altitude() ;
+  Serial.print(", altitude: ");
+  Serial.print(get_altitude());
+  
+  Serial.print(", Relative Alt: ");
+  Serial.print(temp_alt - ground_altitude );
+  
+  Serial.print(", Max Alt: ");
+  Serial.println(max_altitude);
+  //////////////////////////////////////////////////////
+}
 
 
 
@@ -81,7 +104,9 @@ void wait_for_barometer_stabilization()
         
         float realtive_altitude = 99999; 
         
-
+         #ifdef DEBUG
+            Serial.print ("\n");
+        #endif
         unsigned char read_counter;
 	while(realtive_altitude > STABILIZATION_FACTOR)
 	{
@@ -104,7 +129,9 @@ void wait_for_barometer_stabilization()
           if(realtive_altitude < 0) realtive_altitude = realtive_altitude * -1;  // Absolute value         
 	  //Serial.print("\nrealtive_altitude:");
 	  //Serial.println(realtive_altitude);
-          Serial.print (".");
+          #ifdef DEBUG
+            Serial.print (".");
+          #endif
 	}
 }
 
@@ -135,6 +162,12 @@ void setup_barometer()
   }
   
   //Wait until the pressure is not changing
+  wait_for_barometer_stabilization();
+  delay(1000);
+  wait_for_barometer_stabilization();
+  delay(1500);
+  wait_for_barometer_stabilization();
+  delay(2000);
   wait_for_barometer_stabilization();
   //when ready set ground altitudw
   ground_altitude = get_altitude();	

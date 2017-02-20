@@ -15,7 +15,6 @@
 
 //For IMU Sensor
 #include <Wire.h>
-#include "I2Cdev.h"
 
 //Personal libraries
 #include "arliss.h"
@@ -24,16 +23,11 @@
 #include "MS561101BA.h" 
 #include "barometer.h"
 
-//For GYRO MPU6050
-#include "MPU6050.h"
-#include "accelgyro.h"
-
 /////////////////////////////////////////////////
 //  DEFINES
 ////////////////////////////////////////////////
 #define DEBUG
-//#defie BAROMETER
-#define GYRO
+
 
 
 
@@ -52,41 +46,19 @@ ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = l
 void setup()
 {
   Wire.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000);
   
-  #ifdef BAROMETER
-    #ifdef DEBUG
-      Serial.println("\nSetting Barometer");
-    #endif
-    
-    setup_barometer();
-    
-    #ifdef DEBUG
-      Serial.println("\nBarometer Ready!!");
-      Serial.print("\nGround altitude: ");
-      Serial.println(ground_altitude);
-    #endif
+  #ifdef DEBUG
+    Serial.println("\nSetting Barometer");
   #endif
   
+  setup_barometer();
   
-  #ifdef GYRO
-    #ifdef DEBUG
-      Serial.println("\nInitializing Gyro...");
-    #endif
-    
-    accelgyro.initialize();
-    // verify connection
-    if(accelgyro.testConnection() == 0)
-    {
-      error_flag = 1;
-      #ifdef DEBUG
-            Serial.println("Gyro connection failed");
-      #endif
-    }
-    #ifdef DEBUG
-      else Serial.println("Gyro connection successful");
-    #endif
+  #ifdef DEBUG
+    Serial.println("\nBarometer Ready!!");
+    Serial.print("\nGround altitude: ");
+    Serial.println(ground_altitude);
   #endif
   
   current_rover_state = pre_launch;
@@ -97,11 +69,39 @@ void setup()
 }
 
 
+void print_barometer_data()
+{
+   ////////////////////////Barometro//////////////////////////
+  //Temp
+  Serial.print(" temp: ");
+  Serial.print(get_temperature());
+  
+  
+  //Press
+  Serial.print(", pres: ");
+  Serial.print(get_pressure());
+  
+  //Alt
+  float temp_alt = get_altitude() ;
+  Serial.print(", altitude: ");
+  Serial.print(get_altitude());
+  
+  Serial.print(", Relative Alt: ");
+  Serial.print(temp_alt - ground_altitude );
+  
+  Serial.print(", Max Alt: ");
+  Serial.println(max_altitude);
+  //////////////////////////////////////////////////////
+
+}
 
 
 void loop()
 {
+  //Serial.print("Current rover state:");
+  //Serial.println(current_rover_state);
   
+  //print_barometer_data();
   
   // Execute current rover state corresponding routine
   //(*rover_state_routines[current_rover_state])(); 
@@ -113,16 +113,29 @@ void loop()
 
 
 
+void print_prelaunch_info()
+{
+    //Alt
+    float temp_alt = get_altitude() ;
+    Serial.print("altitude: ");
+    Serial.print(get_altitude());
+    
+    Serial.print(", Relative Alt: ");
+    Serial.print(temp_alt - ground_altitude );
+    
+    Serial.print(", Max Alt: ");
+    Serial.println(max_altitude);
+    //////////////////////////////////////////////////////
+}
 
 // During the pre launch: wait until launch detection
 void *pre_launch_routine()
 {
   Serial.println("Rove_status: pre_launch");
   
-  
   while(current_rover_state == pre_launch)
   {
-    print_gyro_data();
+    print_prelaunch_info();
   }
   
   current_rover_state = ascent;
