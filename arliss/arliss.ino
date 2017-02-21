@@ -21,7 +21,7 @@
 #include "arliss.h"
 
 //For Barometer MS5611
-#include "MS561101BA.h" 
+#include "MS5611.h" 
 #include "barometer.h"
 
 //For GYRO MPU6050
@@ -32,7 +32,7 @@
 //  DEFINES
 ////////////////////////////////////////////////
 #define DEBUG
-//#defie BAROMETER
+#define BAROMETER
 #define GYRO
 
 
@@ -64,8 +64,6 @@ void setup()
     
     #ifdef DEBUG
       Serial.println("\nBarometer Ready!!");
-      Serial.print("\nGround altitude: ");
-      Serial.println(ground_altitude);
     #endif
   #endif
   
@@ -122,7 +120,7 @@ void *pre_launch_routine()
   
   while(current_rover_state == pre_launch)
   {
-    print_gyro_data();
+    print_barometer_data();
   }
   
   current_rover_state = ascent;
