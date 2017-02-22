@@ -59,6 +59,16 @@ void print_gyro_data()
     Serial.print(gx); Serial.print("\t");
     Serial.print(gy); Serial.print("\t");
     Serial.println(gz);
+}
 
 
+
+
+////////////////// SET UP FUNCTIONS ///////////////////////////////////////
+int init_accelgyro()
+{
+  accelgyro.initialize();
+  // verify connection
+  if(accelgyro.testConnection() == 0) return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }

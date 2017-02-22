@@ -28,12 +28,17 @@
 #include "MPU6050.h"
 #include "accelgyro.h"
 
+
 /////////////////////////////////////////////////
 //  DEFINES
 ////////////////////////////////////////////////
+// For Debugging
 #define DEBUG
 #define BAROMETER
-#define GYRO
+#define ACCELGYRO
+
+//For Operations
+#define RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION 1  //Relative altitude for detect launch
 
 
 
@@ -42,7 +47,7 @@
 /////////////////////////////////////////////////
 ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = launch, 
 
-
+char *  message_buffer;
 
 //////////////////////////////////////////////////
 //  FUNCTIONS
@@ -55,43 +60,24 @@ void setup()
   Serial.begin(9600);
   delay(1000);
   
+  // Initialize Barometer
   #ifdef BAROMETER
-    #ifdef DEBUG
-      Serial.println("\nSetting Barometer");
-    #endif
-    
-    setup_barometer();
-    
-    #ifdef DEBUG
-      Serial.println("\nBarometer Ready!!");
-    #endif
+    send_message("Initializing Barometer");
+    // verify connection
+    if (init_barometer() == EXIT_FAILURE) handle_error("Barometer connection failed");;
+    send_message("Barometer Ready");
   #endif
-  
-  
-  #ifdef GYRO
-    #ifdef DEBUG
-      Serial.println("\nInitializing Gyro...");
-    #endif
-    
+
+  // Initialize Accelgyro  
+  #ifdef ACCELGYRO
+    send_message("Initializing AccelGyro");
     accelgyro.initialize();
     // verify connection
-    if(accelgyro.testConnection() == 0)
-    {
-      error_flag = 1;
-      #ifdef DEBUG
-            Serial.println("Gyro connection failed");
-      #endif
-    }
-    #ifdef DEBUG
-      else Serial.println("Gyro connection successful");
-    #endif
+    if(init_accelgyro() == EXIT_FAILURE) handle_error("Gyro connection failed");
+    send_message("AccelGyro Ready");
   #endif
   
   current_rover_state = pre_launch;
-  
-  pre_launch_routine();
-  
-
 }
 
 
@@ -99,76 +85,118 @@ void setup()
 
 void loop()
 {
-  
-  
   // Execute current rover state corresponding routine
-  //(*rover_state_routines[current_rover_state])(); 
-  
-  Serial.println("\n\nEnded\n\n");
-  
+  (*rover_state_routines[current_rover_state])(); 
+}
+
+
+
+
+////////////////////////// GENERAL FUNCTIONS    /////////////////////////////////////////
+int send_message(const char * message)
+{
+  #ifdef DEBUG
+      Serial.print("$");
+      Serial.println(message);
+  #endif
+  return EXIT_SUCCESS;
+}
+
+
+void handle_error(const char * message)
+{
+  #ifdef DEBUG
+      Serial.print("!Error: ");
+      Serial.println(message);
+      Serial.println("\Ending Program...\n");
+  #endif
   while(1);
 }
 
 
 
 
+////////////////////////// PRE LAUNCH FUNCTIONS    /////////////////////////////////////////
 // During the pre launch: wait until launch detection
 void *pre_launch_routine()
 {
-  Serial.println("Rove_status: pre_launch");
+  send_message("Rove_status: pre_launch");
   
+  
+      
+    #ifdef DEBUG
+    Serial.println("Waiting for launch...");
+    #endif
   
   while(current_rover_state == pre_launch)
   {
     print_barometer_data();
+    // If Relative Altitude > RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION, Launch detection!!
+    if( (get_altitude() - ground_altitude) > RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION)
+    {  
+      current_rover_state = ascent; // End the pre_launch_routine
+      break;
+    }
+
   }
-  
-  current_rover_state = ascent;
-  ascent_routine();
+  send_message("Launched");  
 }
+
+
+
+////////////////////////// ASCENT FUNCTIONS    /////////////////////////////////////////
 
 void *ascent_routine()
 {
-  Serial.println("Rove_status: ascent");
+  send_message("Rove_status: ascent");
   
   current_rover_state = descent;
-  descent_routine();
 }
 
+
+
+////////////////////////// DESCENT FUNCTIONS    /////////////////////////////////////////
 
 void *descent_routine()
 {
-  Serial.println("Rove_status: descent");
+  send_message("Rove_status: descent");
   
   current_rover_state = navigation;
-  navigation_routine();
 }
 
+
+
+////////////////////////// NAVIGATION FUNCTIONS    /////////////////////////////////////////
 
 void *navigation_routine()
 {
-  Serial.println("Rove_status: navigation");
+  send_message("Rove_status: navigation");
   
   current_rover_state = closing_up;
-  closing_up_routine();
 }
 
+
+
+
+////////////////////////// CLOSING UP FUNCTIONS    /////////////////////////////////////////
 
 void *closing_up_routine()
 {
-  Serial.println("Rove_status: closing_up");
+  send_message("Rove_status: closing_up");
   
   current_rover_state = end_navigation;
-  end_navigation_routine();
 }
 
 
 
+////////////////////////// END NAVIGATION FUNCTIONS    ////////////////////////////////////////
 void *end_navigation_routine()
 {
-  Serial.println("Rove_status: end_navigation");
+  send_message("Rove_status: end_navigation");
   
+  send_message("Ended");
   
+  while(1);
 }
 
 

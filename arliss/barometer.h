@@ -33,6 +33,7 @@
 // For Barometer
 MS5611 barometer; //ms5611
 double referencePressure;
+float ground_altitude;
 float max_altitude;
 
 
@@ -63,11 +64,12 @@ void print_barometer_data()
   Serial.print(get_pressure());
   
   //Alt
+  float temp_altitude = get_altitude();
   Serial.print(", altitude: ");
-  Serial.print(get_altitude());
+  Serial.print(temp_altitude);
   
   Serial.print(", Relative Alt: ");
-  Serial.print(get_relative_altitude() );
+  Serial.print(temp_altitude - ground_altitude );
   
   Serial.print(", Max Alt: ");
   Serial.println(max_altitude);
@@ -77,24 +79,18 @@ void print_barometer_data()
 
 
 ////////////////// SET UP FUNCTIONS ///////////////////////////////////////
-void setup_barometer()
+int init_barometer()
 {
-  // Initialize Barometer sensor
-  #ifdef DEBUG
-    Serial.println("Initialize Barometer...");
-  #endif
+  if(!barometer.begin()) return EXIT_FAILURE;
 
-  while(!barometer.begin())
-  {
-    #ifdef DEBUG
-      Serial.println("Could not find a valid Barometer sensor, check wiring!");
-    #endif
-    delay(500);
-  }
   // Get reference pressure for relative altitude
   referencePressure = barometer.readPressure();
   // Check settings
   barometer.getOversampling();	
+  
+  // Set ground altitude
+  ground_altitude = get_altitude() ;
+  return EXIT_SUCCESS;
 }
 
 
@@ -118,12 +114,7 @@ float get_altitude()
   return temp_altitude; 
 }
 
-float get_relative_altitude()
-{
-  long temp_pressure = barometer.readPressure();
-  // Calculate altitude
-  return barometer.getAltitude(temp_pressure, referencePressure);
-}
+
 
 
 //////////////////////////  PRESSURE FUNCTIONS  ///////////////////////////////////////////////
