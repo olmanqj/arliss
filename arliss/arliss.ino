@@ -38,7 +38,8 @@
 #define ACCELGYRO
 
 //For Operations
-#define RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION 1  //Relative altitude for detect launch
+#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1  //Relative altitude for detect launch
+#define ALTITUDE_LNADING_DETECTION_THRESHOLD 1  //Relative altitude for detect landing
 
 
 
@@ -71,13 +72,15 @@ void setup()
   // Initialize Accelgyro  
   #ifdef ACCELGYRO
     send_message("Initializing AccelGyro");
-    accelgyro.initialize();
     // verify connection
     if(init_accelgyro() == EXIT_FAILURE) handle_error("Gyro connection failed");
     send_message("AccelGyro Ready");
   #endif
   
+  send_message("All System Ready");
   current_rover_state = pre_launch;
+  delay(1000);
+
 }
 
 
@@ -95,12 +98,17 @@ void loop()
 ////////////////////////// GENERAL FUNCTIONS    /////////////////////////////////////////
 int send_message(const char * message)
 {
+  pkg_counter++;
   #ifdef DEBUG
-      Serial.print("$");
+      Serial.print("pkg:");
+      Serial.print(pkg_counter);
+      Serial.print("\t$");
       Serial.println(message);
   #endif
   return EXIT_SUCCESS;
 }
+
+
 
 
 void handle_error(const char * message)
@@ -114,32 +122,53 @@ void handle_error(const char * message)
 }
 
 
+//Return SUCCESS if already passed the amount of seconds specified
+int every_x_seconds(unsigned int seconds, unsigned long  *last_time_executed)
+{
+  if( ((seconds * 1000) + *last_time_executed) <= millis() ){
+    *last_time_executed = millis();
+    return EXIT_SUCCESS;
+  }
+  return EXIT_FAILURE;
+}
 
+
+////////////////////////////////////////////////////////////////////////////////////////////
+////////                      MODES OF OPERATION
+////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////// PRE LAUNCH FUNCTIONS    /////////////////////////////////////////
 // During the pre launch: wait until launch detection
 void *pre_launch_routine()
 {
   send_message("Rove_status: pre_launch");
-  
-  
-      
-    #ifdef DEBUG
-    Serial.println("Waiting for launch...");
-    #endif
+
+  unsigned long last_time_executed= millis();   //For time counting
   
   while(current_rover_state == pre_launch)
   {
-    print_barometer_data();
-    // If Relative Altitude > RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION, Launch detection!!
-    if( (get_altitude() - ground_altitude) > RELATIVE_ALTITUDE_FOR_LAUNCH_DETECTION)
+    
+    #ifdef DEBUG
+      /*
+      pkg_counter++;
+      Serial.print("pkg:");
+      Serial.print(pkg_counter);
+      //print_barometer_data();
+      print_accelgyro_data();
+    */
+    #endif
+    
+    // If Relative Altitude > ALTITUDE_LAUNCH_DETECTION_THRESHOLD, AND IN motion, Launch detection!!
+    if( ((get_altitude() - ground_altitude) > ALTITUDE_LAUNCH_DETECTION_THRESHOLD) && in_motion())
     {  
+      send_message("Launched"); 
       current_rover_state = ascent; // End the pre_launch_routine
       break;
     }
+    //Send a message every 3 sec
+    if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Waiting for launch");
 
-  }
-  send_message("Launched");  
+  } 
 }
 
 
@@ -149,8 +178,23 @@ void *pre_launch_routine()
 void *ascent_routine()
 {
   send_message("Rove_status: ascent");
+  unsigned long last_time_executed= millis();   //For time counting
+  while(current_rover_state == ascent)
+  {
+    // If Relative Altitude < Max Altitude, Apoapsis detection!!
+    if( ((get_altitude() - ground_altitude) < max_altitude))
+    {  
+      send_message("Apoapsis"); 
+      current_rover_state = descent; // End the ascent_routine
+      break;
+    }
+    //Send a message every 3 sec
+    if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Ascending");
+  } 
   
-  current_rover_state = descent;
+  
+  current_rover_state = descent; // End the ascent_routine
+
 }
 
 
@@ -161,7 +205,21 @@ void *descent_routine()
 {
   send_message("Rove_status: descent");
   
-  current_rover_state = navigation;
+  
+  unsigned long last_time_executed= millis();   //For time counting
+  
+  while(current_rover_state == descent)
+  {
+    // If Relative Altitude <= ALTITUDE_LNADING_DETECTION_THRESHOLD, AND NOT in motion, landing detection!!
+    if( ((get_altitude() - ground_altitude) <= ALTITUDE_LNADING_DETECTION_THRESHOLD) && !in_motion())
+    {  
+      send_message("Landing"); 
+      current_rover_state = navigation; // End the descent_routine
+      break;
+    }
+    //Send a message every 3 sec
+    if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Descending");
+  } 
 }
 
 

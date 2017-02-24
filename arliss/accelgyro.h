@@ -21,54 +21,98 @@
 ////////////////////////////////////////////////
 #define DEBUG
 
+#define MOTION_READS  20
+#define IN_MOTION_BUFF_SIZE 10
+
+#define MOTION_DETECTION_THRESHOLD 1
+#define MOTION_DETECTION_DURATION 1
+#define ZERO_MOTION_DETECTION_THRESHOLD 2
+#define ZERO_MOTION_DETECTION_DURATION 2
 
 
 
 //////////////////////////////////////////////////
 //  GLOBAL VARIABLES
 /////////////////////////////////////////////////
-
-
 MPU6050 accelgyro;
-
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
+Activites activiti;
 
 
+
+unsigned char in_motion_buff[IN_MOTION_BUFF_SIZE];
+unsigned char in_motion_buff_index=0;
 
 //////////////////////////////////////////////////
 //  FUNCTIONS
 /////////////////////////////////////////////////
 
+unsigned char in_motion();
 
-void print_gyro_data()
+
+/////////////////// GENERAL FUNCTION  //////////////////////////////
+
+void print_accelgyro_data()
 {
-
-    // read raw accel/gyro measurements from device
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-
-    // these methods (and a few others) are also available
-    //accelgyro.getAcceleration(&ax, &ay, &az);
-    //accelgyro.getRotation(&gx, &gy, &gz);
-
-    // display tab-separated accel/gyro x/y/z values
-    Serial.print("a/g:\t");
-    Serial.print(ax); Serial.print("\t");
-    Serial.print(ay); Serial.print("\t");
-    Serial.print(az); Serial.print("\t");
-    Serial.print(gx); Serial.print("\t");
-    Serial.print(gy); Serial.print("\t");
-    Serial.println(gz);
+  Serial.print("In_motion: ");
+  Serial.println(in_motion());
 }
 
 
+
+void push_motion_val(unsigned char val) {
+  in_motion_buff[in_motion_buff_index] = val;
+  in_motion_buff_index = (in_motion_buff_index + 1) % IN_MOTION_BUFF_SIZE;
+}
+
+float get_average(unsigned char * buff, unsigned char size) {
+  float sum = 0.0;
+  for(int i=0; i<size; i++) {
+    sum += buff[i];
+  }
+  return sum / size;
+}
 
 
 ////////////////// SET UP FUNCTIONS ///////////////////////////////////////
 int init_accelgyro()
 {
-  accelgyro.initialize();
-  // verify connection
-  if(accelgyro.testConnection() == 0) return EXIT_FAILURE;
+  if(!accelgyro.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_16G)) return EXIT_FAILURE;
+  accelgyro.setAccelPowerOnDelay(MPU6050_DELAY_3MS);
+  accelgyro.setIntFreeFallEnabled(false);  
+  accelgyro.setIntZeroMotionEnabled(false);
+  accelgyro.setIntMotionEnabled(false);
+  accelgyro.setDHPFMode(MPU6050_DHPF_5HZ);
+  accelgyro.setMotionDetectionThreshold( MOTION_DETECTION_THRESHOLD );
+  accelgyro.setMotionDetectionDuration( MOTION_DETECTION_DURATION );
+  accelgyro.setZeroMotionDetectionThreshold( ZERO_MOTION_DETECTION_THRESHOLD );
+  accelgyro.setZeroMotionDetectionDuration( ZERO_MOTION_DETECTION_DURATION );	
+  
+  
+  // populate in_motion_buff before starting 
+  for(int i=0; i<IN_MOTION_BUFF_SIZE; i++) {
+    in_motion_buff[i] = in_motion();
+  }
+  
   return EXIT_SUCCESS;
 }
+
+
+
+
+////////////////// ACCELEROMETER FUNCTIONS ///////////////////////////////////////
+
+unsigned char in_motion()
+{
+  activiti = accelgyro.readActivites();
+  push_motion_val(activiti.isActivity);
+  if( get_average(in_motion_buff, IN_MOTION_BUFF_SIZE) < 0.01 ) return 0;
+  return 1;
+}
+ 
+
+
+
+
+
+////////////////// GYROSCOPE FUNCTIONS ///////////////////////////////////////
+
