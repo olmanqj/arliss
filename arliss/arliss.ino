@@ -159,7 +159,8 @@ void *pre_launch_routine()
     #endif
     
     // If Relative Altitude > ALTITUDE_LAUNCH_DETECTION_THRESHOLD, AND IN motion, Launch detection!!
-    if( ((get_altitude() - ground_altitude) > ALTITUDE_LAUNCH_DETECTION_THRESHOLD) && in_motion())
+    
+    if( in_motion() && ((get_altitude() - ground_altitude) > ALTITUDE_LAUNCH_DETECTION_THRESHOLD) )
     {  
       send_message("Launched"); 
       current_rover_state = ascent; // End the pre_launch_routine
@@ -210,8 +211,9 @@ void *descent_routine()
   
   while(current_rover_state == descent)
   {
+    Serial.println(in_motion());
     // If Relative Altitude <= ALTITUDE_LNADING_DETECTION_THRESHOLD, AND NOT in motion, landing detection!!
-    if( ((get_altitude() - ground_altitude) <= ALTITUDE_LNADING_DETECTION_THRESHOLD) && !in_motion())
+    if(!in_motion() && ((get_altitude() - ground_altitude) <= ALTITUDE_LNADING_DETECTION_THRESHOLD))
     {  
       send_message("Landing"); 
       current_rover_state = navigation; // End the descent_routine
