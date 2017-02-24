@@ -40,7 +40,13 @@
 //For Operations
 #define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1  //Relative altitude for detect launch
 #define ALTITUDE_LNADING_DETECTION_THRESHOLD 1  //Relative altitude for detect landing
+#define APOAPSIS_DETECTION_THRESHOLD 1  //Threshold between relative altitude and max altitude 
 
+//For Watchdog
+#define PRE_LAUNCH_WATCHDOG 30
+#define ASCENT_WATCHDOG 3
+#define DESCENT_WATCHDOG 10
+#define CLOSING_UP_WATCHDOG 5
 
 
 //////////////////////////////////////////////////
@@ -48,7 +54,8 @@
 /////////////////////////////////////////////////
 ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = launch, 
 
-char *  message_buffer;
+
+
 
 //////////////////////////////////////////////////
 //  FUNCTIONS
@@ -60,6 +67,10 @@ void setup()
   Wire.begin();
   Serial.begin(9600);
   delay(1000);
+  
+  #ifdef DEBUG
+    Serial.print("\n--------------------------------\n");
+  #endif
   
   // Initialize Barometer
   #ifdef BAROMETER
@@ -88,6 +99,7 @@ void setup()
 
 void loop()
 {
+
   // Execute current rover state corresponding routine
   (*rover_state_routines[current_rover_state])(); 
 }
@@ -133,6 +145,22 @@ int every_x_seconds(unsigned int seconds, unsigned long  *last_time_executed)
 }
 
 
+void  set_watchdog_mins(float mins)
+{
+  watchdog_threshold = (unsigned long)((mins * 60000) + millis());
+}
+
+unsigned char check_watchdog()
+{
+  if( watchdog_threshold <= millis()  ) 
+  {
+    send_message("watchdog_activated");
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////                      MODES OF OPERATION
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,25 +170,13 @@ int every_x_seconds(unsigned int seconds, unsigned long  *last_time_executed)
 void *pre_launch_routine()
 {
   send_message("Rove_status: pre_launch");
-
-  unsigned long last_time_executed= millis();   //For time counting
+  set_watchdog_mins(PRE_LAUNCH_WATCHDOG);
   
+  unsigned long last_time_executed= millis();   //For time counting
   while(current_rover_state == pre_launch)
   {
-    
-    #ifdef DEBUG
-      /*
-      pkg_counter++;
-      Serial.print("pkg:");
-      Serial.print(pkg_counter);
-      //print_barometer_data();
-      print_accelgyro_data();
-    */
-    #endif
-    
-    // If Relative Altitude > ALTITUDE_LAUNCH_DETECTION_THRESHOLD, AND IN motion, Launch detection!!
-    
-    if( in_motion() && ((get_altitude() - ground_altitude) > ALTITUDE_LAUNCH_DETECTION_THRESHOLD) )
+    // If Relative Altitude > ALTITUDE_LAUNCH_DETECTION_THRESHOLD, AND IN motion, Launch detection!! 
+    if( in_motion() && ( get_relative_altitude() > ALTITUDE_LAUNCH_DETECTION_THRESHOLD) )
     {  
       send_message("Launched"); 
       current_rover_state = ascent; // End the pre_launch_routine
@@ -168,7 +184,9 @@ void *pre_launch_routine()
     }
     //Send a message every 3 sec
     if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Waiting for launch");
-
+    
+    // Check watchdog termination
+    if(check_watchdog() == EXIT_FAILURE) current_rover_state = ascent;
   } 
 }
 
@@ -182,8 +200,16 @@ void *ascent_routine()
   unsigned long last_time_executed= millis();   //For time counting
   while(current_rover_state == ascent)
   {
-    // If Relative Altitude < Max Altitude, Apoapsis detection!!
-    if( ((get_altitude() - ground_altitude) < max_altitude))
+      /*
+      Serial.print("Relative:");
+      Serial.print(get_relative_altitude() );
+      Serial.print("\tMax relative:");
+      Serial.println(max_relative_altitude );
+      print_barometer_data();
+      */
+    
+    // If Relative Altitude < Max relative Altitude, Apoapsis detection!!
+    if( (get_relative_altitude() + APOAPSIS_DETECTION_THRESHOLD)  < max_relative_altitude)
     {  
       send_message("Apoapsis"); 
       current_rover_state = descent; // End the ascent_routine
@@ -192,10 +218,6 @@ void *ascent_routine()
     //Send a message every 3 sec
     if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Ascending");
   } 
-  
-  
-  current_rover_state = descent; // End the ascent_routine
-
 }
 
 
@@ -205,17 +227,14 @@ void *ascent_routine()
 void *descent_routine()
 {
   send_message("Rove_status: descent");
-  
-  
   unsigned long last_time_executed= millis();   //For time counting
-  
   while(current_rover_state == descent)
   {
-    Serial.println(in_motion());
     // If Relative Altitude <= ALTITUDE_LNADING_DETECTION_THRESHOLD, AND NOT in motion, landing detection!!
-    if(!in_motion() && ((get_altitude() - ground_altitude) <= ALTITUDE_LNADING_DETECTION_THRESHOLD))
+    if(!in_motion() && (get_relative_altitude() < ALTITUDE_LNADING_DETECTION_THRESHOLD))
     {  
       send_message("Landing"); 
+      delay(10000); //Wait some seconds before navigation begins, for ensure landing
       current_rover_state = navigation; // End the descent_routine
       break;
     }
@@ -228,9 +247,16 @@ void *descent_routine()
 
 ////////////////////////// NAVIGATION FUNCTIONS    /////////////////////////////////////////
 
+void detach_parachute()
+{
+  send_message("Detaching parachute");
+  delay(2000);  //Wait some seconds for ensure parachute detaching
+}
+
 void *navigation_routine()
 {
   send_message("Rove_status: navigation");
+  detach_parachute();
   
   current_rover_state = closing_up;
 }

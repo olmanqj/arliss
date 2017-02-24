@@ -21,13 +21,12 @@
 ////////////////////////////////////////////////
 #define DEBUG
 
-#define MOTION_READS  20
-#define IN_MOTION_BUFF_SIZE 10
+#define IN_MOTION_BUFF_SIZE 32
 
-#define MOTION_DETECTION_THRESHOLD 1
-#define MOTION_DETECTION_DURATION 1
+#define MOTION_DETECTION_THRESHOLD 2
+#define MOTION_DETECTION_DURATION 2
 #define ZERO_MOTION_DETECTION_THRESHOLD 2
-#define ZERO_MOTION_DETECTION_DURATION 2
+#define ZERO_MOTION_DETECTION_DURATION 1
 
 
 
@@ -104,8 +103,11 @@ int init_accelgyro()
 unsigned char in_motion()
 {
   activiti = accelgyro.readActivites();
-  push_motion_val(activiti.isActivity);
-  if( get_average(in_motion_buff, IN_MOTION_BUFF_SIZE) < 0.01 ) return 0;
+  if(activiti.isActivity == 1 )//|| activiti.isInactivity == 0) 
+    push_motion_val(1);
+  else   push_motion_val(0);
+
+  if( get_average(in_motion_buff, IN_MOTION_BUFF_SIZE) == 0 ) return 0;
   return 1;
 }
  

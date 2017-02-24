@@ -35,7 +35,7 @@ MS5611 barometer; //ms5611
 double referencePressure;
 float ground_altitude;
 float max_altitude;
-
+float max_relative_altitude;
 
 //////////////////////////////////////////////////
 //  FUNCTIONS
@@ -64,15 +64,14 @@ void print_barometer_data()
   Serial.print(get_pressure());
   
   //Alt
-  float temp_altitude = get_altitude();
   Serial.print(", altitude: ");
-  Serial.print(temp_altitude);
+  Serial.print(get_altitude());
   
   Serial.print(", Relative Alt: ");
-  Serial.print(temp_altitude - ground_altitude );
+  Serial.print(get_relative_altitude() );
   
-  Serial.print(", Max Alt: ");
-  Serial.println(max_altitude);
+  Serial.print(", Max Relative: ");
+  Serial.println(max_relative_altitude);
   //////////////////////////////////////////////////////
 }
 
@@ -114,8 +113,19 @@ float get_altitude()
   return temp_altitude; 
 }
 
+float get_relative_altitude()
+{
+  float temp_relative_altitude= get_altitude() - ground_altitude;
+  if(temp_relative_altitude > max_relative_altitude) max_relative_altitude = temp_relative_altitude;  // Set Max relative altitude when needed
+  return temp_relative_altitude;
+}
 
 
+void reset_relative_altitude()
+{
+   ground_altitude = get_altitude() ; 
+   max_relative_altitude = 0;
+}
 
 //////////////////////////  PRESSURE FUNCTIONS  ///////////////////////////////////////////////
 //Wrapper, returns long
