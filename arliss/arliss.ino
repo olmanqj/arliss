@@ -38,14 +38,15 @@
 #define ACCELGYRO
 
 //For Operations
-#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1  //Relative altitude for detect launch
-#define ALTITUDE_LNADING_DETECTION_THRESHOLD 1  //Relative altitude for detect landing
-#define APOAPSIS_DETECTION_THRESHOLD 1  //Threshold between relative altitude and max altitude 
+#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1    //Relative altitude for detect launch
+#define APOAPSIS_DETECTION_THRESHOLD 2           //Threshold between relative altitude and max altitude 
+#define ALTITUDE_LNADING_DETECTION_THRESHOLD 2   //Relative altitude for detect landing
+#define DELAY_BEFOR_NAVIGATION_START 10000       //Time between descente ends and starts navigation
 
 //For Watchdog
 #define PRE_LAUNCH_WATCHDOG 30
-#define ASCENT_WATCHDOG 3
-#define DESCENT_WATCHDOG 10
+#define ASCENT_WATCHDOG 30
+#define DESCENT_WATCHDOG 30
 #define CLOSING_UP_WATCHDOG 5
 
 
@@ -234,7 +235,7 @@ void *descent_routine()
     if(!in_motion() && (get_relative_altitude() < ALTITUDE_LNADING_DETECTION_THRESHOLD))
     {  
       send_message("Landing"); 
-      delay(10000); //Wait some seconds before navigation begins, for ensure landing
+      delay(DELAY_BEFOR_NAVIGATION_START); //Wait some seconds before navigation begins, for ensure landing  
       current_rover_state = navigation; // End the descent_routine
       break;
     }
