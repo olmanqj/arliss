@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               //////////////////////////////////////////////////
 // Arliss.ino
 //
 //
@@ -13,9 +13,12 @@
 //  INCLUDES
 ////////////////////////////////////////////////
 
+
+
 //For IMU Sensor
 #include <Wire.h>
 #include "I2Cdev.h"
+#include <SoftwareSerial.h>
 
 //Personal libraries
 #include "arliss.h"
@@ -28,16 +31,26 @@
 #include "MPU6050.h"
 #include "accelgyro.h"
 
+// For GPS
+#include "TinyGPS++.h"
+#include "gps.h"
+
 
 /////////////////////////////////////////////////
 //  DEFINES
 ////////////////////////////////////////////////
 // For Debugging
 #define DEBUG
-#define BAROMETER
-#define ACCELGYRO
+//#define BAROMETER
+//#define ACCELGYRO
+//#define MAGNETOMETER
+#define GPS
+
 
 //For Operations
+#define DESTINATION_LAT    9.961898
+#define DESTINATION_LON    -84.065769 
+
 #define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1    //Relative altitude for detect launch
 #define APOAPSIS_DETECTION_THRESHOLD 2           //Threshold between relative altitude and max altitude 
 #define ALTITUDE_LNADING_DETECTION_THRESHOLD 2   //Relative altitude for detect landing
@@ -89,6 +102,18 @@ void setup()
     send_message("AccelGyro Ready");
   #endif
   
+  
+   // Initialize GPS  
+  #ifdef GPS
+    send_message("Initializing GPS");
+    // verify connection
+    if(init_gps( DESTINATION_LAT, DESTINATION_LON) == EXIT_FAILURE) handle_error("GPS connection failed");
+    send_message("GPS Ready");
+  #endif
+  
+  
+  
+  
   send_message("All System Ready");
   current_rover_state = pre_launch;
   delay(1000);
@@ -101,65 +126,14 @@ void setup()
 void loop()
 {
 
+  print_gps_data();
+  gps_delay( 1000 );
   // Execute current rover state corresponding routine
-  (*rover_state_routines[current_rover_state])(); 
+  //(*rover_state_routines[current_rover_state])(); 
 }
 
 
 
-
-////////////////////////// GENERAL FUNCTIONS    /////////////////////////////////////////
-int send_message(const char * message)
-{
-  pkg_counter++;
-  #ifdef DEBUG
-      Serial.print("pkg:");
-      Serial.print(pkg_counter);
-      Serial.print("\t$");
-      Serial.println(message);
-  #endif
-  return EXIT_SUCCESS;
-}
-
-
-
-
-void handle_error(const char * message)
-{
-  #ifdef DEBUG
-      Serial.print("!Error: ");
-      Serial.println(message);
-      Serial.println("\Ending Program...\n");
-  #endif
-  while(1);
-}
-
-
-//Return SUCCESS if already passed the amount of seconds specified
-int every_x_seconds(unsigned int seconds, unsigned long  *last_time_executed)
-{
-  if( ((seconds * 1000) + *last_time_executed) <= millis() ){
-    *last_time_executed = millis();
-    return EXIT_SUCCESS;
-  }
-  return EXIT_FAILURE;
-}
-
-
-void  set_watchdog_mins(float mins)
-{
-  watchdog_threshold = (unsigned long)((mins * 60000) + millis());
-}
-
-unsigned char check_watchdog()
-{
-  if( watchdog_threshold <= millis()  ) 
-  {
-    send_message("watchdog_activated");
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
