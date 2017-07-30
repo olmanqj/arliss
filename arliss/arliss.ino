@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               //////////////////////////////////////////////////
+/////////////////////////////////////////////////                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               //////////////////////////////////////////////////
 // Arliss.ino
 //
 //
@@ -17,10 +17,11 @@
 
 //For IMU Sensor
 #include <Wire.h>
-#include "I2Cdev.h"
+#include <I2Cdev.h>
 #include <SoftwareSerial.h>
 
 //Personal libraries
+#include "arliss_config.h"
 #include "arliss.h"
 
 //For Barometer MS5611
@@ -30,6 +31,12 @@
 //For GYRO MPU6050
 #include "MPU6050.h"
 #include "accelgyro.h"
+
+//For Magnetometer HMC5883L
+#include <HMC5883L.h>
+#include <MPU6050.h>
+#include "magnetometer.h"
+
 
 // For GPS
 #include "TinyGPS++.h"
@@ -41,26 +48,11 @@
 ////////////////////////////////////////////////
 // For Debugging
 #define DEBUG
-//#define BAROMETER
-//#define ACCELGYRO
-//#define MAGNETOMETER
+#define BAROMETER
+#define ACCELGYRO
+#define MAGNETOMETER
 #define GPS
 
-
-//For Operations
-#define DESTINATION_LAT    9.961898
-#define DESTINATION_LON    -84.065769 
-
-#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1    //Relative altitude for detect launch
-#define APOAPSIS_DETECTION_THRESHOLD 2           //Threshold between relative altitude and max altitude 
-#define ALTITUDE_LNADING_DETECTION_THRESHOLD 2   //Relative altitude for detect landing
-#define DELAY_BEFOR_NAVIGATION_START 10000       //Time between descente ends and starts navigation
-
-//For Watchdog
-#define PRE_LAUNCH_WATCHDOG 30
-#define ASCENT_WATCHDOG 30
-#define DESCENT_WATCHDOG 30
-#define CLOSING_UP_WATCHDOG 5
 
 
 //////////////////////////////////////////////////
@@ -83,7 +75,7 @@ void setup()
   delay(1000);
   
   #ifdef DEBUG
-    Serial.print("\n--------------------------------\n");
+    Serial.print("\n--------------------------------\nStrting System!!\n");
   #endif
   
   // Initialize Barometer
@@ -103,6 +95,14 @@ void setup()
   #endif
   
   
+  // Initialize Magnetometer  
+  #ifdef MAGNETOMETER
+    send_message("Initializing Magnetometer");
+    // verify connection
+    if(init_magnetometer() == EXIT_FAILURE) handle_error("Magnetometer connection failed");
+    send_message("Magnetometer Ready");
+  #endif
+  
    // Initialize GPS  
   #ifdef GPS
     send_message("Initializing GPS");
@@ -112,9 +112,7 @@ void setup()
   #endif
   
   
-  
-  
-  send_message("All System Ready");
+  send_message("All Systems Ready");
   current_rover_state = pre_launch;
   delay(1000);
 
@@ -126,10 +124,9 @@ void setup()
 void loop()
 {
 
-  print_gps_data();
-  gps_delay( 1000 );
+   navigation_routine();
   // Execute current rover state corresponding routine
-  //(*rover_state_routines[current_rover_state])(); 
+  (*rover_state_routines[current_rover_state])(); 
 }
 
 
@@ -232,6 +229,16 @@ void *navigation_routine()
 {
   send_message("Rove_status: navigation");
   detach_parachute();
+  
+  float current_lat, current_lon;
+  
+  
+  while(get_distance_to_dest() >  DISTANCE_TO_DEST_THRESHOLD)
+  {
+  
+  
+  }
+  
   
   current_rover_state = closing_up;
 }

@@ -14,6 +14,8 @@
 //  DEF
 ////////////////////////////////////////////////
 
+#define DEBUG
+
 typedef enum {
     pre_launch,
     ascent,

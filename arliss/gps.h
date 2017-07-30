@@ -33,7 +33,7 @@
 
 
 
-static const int gps_rx_pin = 2, gps_tx_pin = 3;
+static const int gps_rx_pin = GPS_RX_PIN, gps_tx_pin = GPS_TX_PIN;
 
 static const uint32_t gps_baud = 9600;
 
