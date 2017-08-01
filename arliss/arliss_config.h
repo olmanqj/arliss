@@ -25,6 +25,11 @@
 #define GPS_RX_PIN         2
 #define GPS_TX_PIN         3
 
+#define MOTOR_R_PIN_A      4
+#define MOTOR_R_PIN_B      5
+
+#define MOTOR_L_PIN_A      6
+#define MOTOR_L_PIN_B      7
 
 
 // Set declination angle on your location and fix heading

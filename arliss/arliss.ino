@@ -24,6 +24,7 @@
 #include "arliss_config.h"
 #include "arliss.h"
 
+
 //For Barometer MS5611
 #include "MS5611.h" 
 #include "barometer.h"
@@ -37,10 +38,13 @@
 #include <MPU6050.h>
 #include "magnetometer.h"
 
-
 // For GPS
 #include "TinyGPS++.h"
 #include "gps.h"
+
+// For Motors
+#include <DC_Motor.h>
+ 
 
 
 /////////////////////////////////////////////////
@@ -111,6 +115,12 @@ void setup()
     send_message("GPS Ready");
   #endif
   
+  
+  // Init Motors
+  DC_Motor motor_r( MOTOR_R_PIN_A, MOTOR_R_PIN_B, 1);
+  DC_Motor motor_l( MOTOR_L_PIN_A, MOTOR_L_PIN_B, 1);
+  
+    
   
   send_message("All Systems Ready");
   current_rover_state = pre_launch;
@@ -232,11 +242,24 @@ void *navigation_routine()
   
   float current_lat, current_lon;
   
+  float distance; // Distance to destination
   
-  while(get_distance_to_dest() >  DISTANCE_TO_DEST_THRESHOLD)
+  while( ( distance = get_distance_to_dest()) >  DISTANCE_TO_DEST_THRESHOLD)
   {
+    
+    Serial.print( "| Dist:" );
+    Serial.print( distance );
+    
+    
+    Serial.print( "| Dest heading:" );
+    get_course_to_dest();
+    Serial.print( course_to_dest );
   
+    Serial.print("| current heading: ");
+    Serial.print( get_heading() );
+    Serial.println();
   
+    gps_delay(1000);
   }
   
   

@@ -48,7 +48,7 @@ SoftwareSerial gps_serial(gps_rx_pin, gps_tx_pin);
 double destination_lat;
 double destination_lon;
 
-unsigned long distance_to_dest;
+unsigned long distance_to_dest = 9999999;
 long course_to_dest;
 
 //////////////////////////////////////////////////
