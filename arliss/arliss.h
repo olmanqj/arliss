@@ -81,7 +81,7 @@ void handle_error(const char * message)
   #ifdef DEBUG
       Serial.print("!Error: ");
       Serial.println(message);
-      Serial.println("\Ending Program...\n");
+      Serial.println("\nEnding Program...\n");
   #endif
   while(1);
 }

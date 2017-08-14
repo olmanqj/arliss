@@ -44,7 +44,7 @@
 
 // For Motors
 #include <DC_Motor.h>
- 
+#include "motoroto.h" 
 
 
 /////////////////////////////////////////////////
@@ -55,7 +55,7 @@
 #define BAROMETER
 #define ACCELGYRO
 #define MAGNETOMETER
-#define GPS
+//#define GPS
 
 
 
@@ -133,10 +133,10 @@ void setup()
 
 void loop()
 {
-
-   navigation_routine();
+   print_magnetometer_data();
+   //tnavigation_routine();
   // Execute current rover state corresponding routine
-  (*rover_state_routines[current_rover_state])(); 
+  //(*rover_state_routines[current_rover_state])(); 
 }
 
 
@@ -235,6 +235,8 @@ void detach_parachute()
   delay(2000);  //Wait some seconds for ensure parachute detaching
 }
 
+
+
 void *navigation_routine()
 {
   send_message("Rove_status: navigation");
@@ -256,9 +258,11 @@ void *navigation_routine()
     Serial.print( course_to_dest );
   
     Serial.print("| current heading: ");
-    Serial.print( get_heading() );
+    float rover_heading = get_heading() ;
+    Serial.print( rover_heading );
     Serial.println();
   
+    calculate_turn( rover_heading, course_to_dest);
     gps_delay(1000);
   }
   
