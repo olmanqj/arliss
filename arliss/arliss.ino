@@ -52,11 +52,11 @@
 ////////////////////////////////////////////////
 // For Debugging
 #define DEBUG
-#define BAROMETER
-#define ACCELGYRO
+//#define BAROMETER
+//#define ACCELGYRO
 #define MAGNETOMETER
-//#define GPS
-
+#define GPS
+#define MOTORS
 
 
 //////////////////////////////////////////////////
@@ -79,7 +79,7 @@ void setup()
   delay(1000);
   
   #ifdef DEBUG
-    Serial.print("\n--------------------------------\nStrting System!!\n");
+    Serial.print("\n--------------------------------\Starting System!!\n");
   #endif
   
   // Initialize Barometer
@@ -116,11 +116,14 @@ void setup()
   #endif
   
   
-  // Init Motors
-  DC_Motor motor_r( MOTOR_R_PIN_A, MOTOR_R_PIN_B, 1);
-  DC_Motor motor_l( MOTOR_L_PIN_A, MOTOR_L_PIN_B, 1);
   
-    
+  // Init Motors
+   #ifdef MOTORS
+    send_message("Initializing Motors");
+    init_motors( MOTOR_L_PIN_A, MOTOR_L_PIN_B, MOTOR_L_PIN_ENA, MOTOR_R_PIN_A, MOTOR_R_PIN_B, MOTOR_R_PIN_ENA); 
+    send_message("Motors Ready");
+  #endif
+  
   
   send_message("All Systems Ready");
   current_rover_state = pre_launch;
@@ -133,8 +136,8 @@ void setup()
 
 void loop()
 {
-   print_magnetometer_data();
-   //tnavigation_routine();
+   //print_magnetometer_data();
+   navigation_routine();
   // Execute current rover state corresponding routine
   //(*rover_state_routines[current_rover_state])(); 
 }
@@ -232,6 +235,12 @@ void *descent_routine()
 void detach_parachute()
 {
   send_message("Detaching parachute");
+  
+  
+  
+  
+  
+  
   delay(2000);  //Wait some seconds for ensure parachute detaching
 }
 
@@ -243,10 +252,13 @@ void *navigation_routine()
   detach_parachute();
   
   float current_lat, current_lon;
+  float turn;
   
   float distance; // Distance to destination
   
-  while( ( distance = get_distance_to_dest()) >  DISTANCE_TO_DEST_THRESHOLD)
+  
+  while(1)
+  //while( ( distance = get_distance_to_dest()) >  DISTANCE_TO_DEST_THRESHOLD)
   {
     
     Serial.print( "| Dist:" );
@@ -260,12 +272,34 @@ void *navigation_routine()
     Serial.print("| current heading: ");
     float rover_heading = get_heading() ;
     Serial.print( rover_heading );
-    Serial.println();
-  
-    calculate_turn( rover_heading, course_to_dest);
+    
+    Serial.print("| turn: ");
+    turn = calculate_turn( rover_heading, course_to_dest);
+    Serial.println(turn);
     gps_delay(1000);
+    
+    
+    while (turn !=  0)
+    {
+       Serial.print("Turning:");
+       Serial.println(turn);
+      
+      motor_turn(turn);
+      // Refresh turn
+      turn = calculate_turn( get_heading(), get_course_to_dest());
+      gps_delay(100);
+    }
+    
+    gps_delay(3000000);
+  
+    // If no turn is necessary, go foreward
+    drive_forward();
+  
+
   }
   
+  // When reached GPS point, stop
+  motor_stop();
   
   current_rover_state = closing_up;
 }

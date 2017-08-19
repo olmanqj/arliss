@@ -16,31 +16,39 @@
 
 
 
+
+// PINOUT
+#define GPS_RX_PIN         12
+#define GPS_TX_PIN         13
+
+
+#define MOTOR_L_PIN_A      3
+#define MOTOR_L_PIN_B      5
+#define MOTOR_L_PIN_ENA    6
+
+#define MOTOR_R_PIN_A      9
+#define MOTOR_R_PIN_B      10
+#define MOTOR_R_PIN_ENA    11
+
+
+
+// For Motor Driver
+#define TURN_THRESHOLD    15
+
+
 //For GPS Operations
 #define DESTINATION_LAT               9.961898
 #define DESTINATION_LON               -84.065769 
 #define DISTANCE_TO_DEST_THRESHOLD    2
-
-// PINOUT
-#define GPS_RX_PIN         2
-#define GPS_TX_PIN         3
-
-#define MOTOR_R_PIN_A      4
-#define MOTOR_R_PIN_B      5
-
-#define MOTOR_L_PIN_A      6
-#define MOTOR_L_PIN_B      7
-
-
 // Set declination angle on your location and fix heading
 // You can find your declination on: http://magnetic-declination.com/
 // (+) Positive or (-) for negative
 // For Bytom / Poland declination angle is 4'26E (positive)
 // For CR is  -1° 44' (negative)
 // Formula: (deg + (min / 60.0)) / (180 / M_PI);
-#define DECLINATION_DEG    1.0
-#define DECLINATION_MIN    44.0
-#define DECLINATION_SYMBOL  -
+#define DECLINATION_DEG              1.0
+#define DECLINATION_MIN              44.0
+#define DECLINATION_SYMBOL           -
 
 
 
