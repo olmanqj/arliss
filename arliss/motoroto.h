@@ -167,16 +167,23 @@ void motor_turn( float way)
 {
 
   if( way == 0) return; 
-  else if (way < 0)   // Turn left
+  
+  float turn_delay = abs(way)* 2 + TURN_DELAY_BASE;
+  
+  Serial.print("turn_delay:");
+  Serial.println(turn_delay);
+  
+  
+  if (way > 0)   // Turn left
   {
       turn_left();
-      delay(50);
+      delay(turn_delay);
       motor_stop();
   }
-  else if (way > 0)  // Turn right
+  else if (way < 0)  // Turn right
   {
     turn_right();
-    delay(50);
+    delay(turn_delay);
     motor_stop();
   } 
 

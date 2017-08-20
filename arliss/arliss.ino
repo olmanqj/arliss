@@ -276,12 +276,12 @@ void *navigation_routine()
     Serial.print("| turn: ");
     turn = calculate_turn( rover_heading, course_to_dest);
     Serial.println(turn);
-    gps_delay(1000);
+    //gps_delay(1000);
     
     
     while (turn !=  0)
     {
-       Serial.print("Turning:");
+       Serial.print("Turn:");
        Serial.println(turn);
       
       motor_turn(turn);
@@ -290,10 +290,11 @@ void *navigation_routine()
       gps_delay(100);
     }
     
-    gps_delay(3000000);
-  
+    
+    Serial.print("Forward:");
+    motor_stop();
     // If no turn is necessary, go foreward
-    drive_forward();
+    //drive_forward();
   
 
   }

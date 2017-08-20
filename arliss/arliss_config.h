@@ -34,6 +34,7 @@
 
 // For Motor Driver
 #define TURN_THRESHOLD    15
+#define TURN_DELAY_BASE   200
 
 
 //For GPS Operations
