@@ -13,12 +13,19 @@
 //  INCLUDES
 ////////////////////////////////////////////////
 
+#if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
+  #define FEATHER
+  // Required for Serial on Zero based boards
+  //#define Serial SERIAL_PORT_USBVIRTUAL
+#endif
 
 
 //For IMU Sensor
 #include <Wire.h>
+#ifndef FEATHER
 #include <I2Cdev.h>
 #include <SoftwareSerial.h>
+#endif
 
 //Personal libraries
 #include "arliss_config.h"
@@ -43,7 +50,6 @@
 #include "gps.h"
 
 // For Motors
-#include <DC_Motor.h>
 #include "motoroto.h" 
 
 
@@ -54,7 +60,7 @@
 #define DEBUG
 //#define BAROMETER
 //#define ACCELGYRO
-#define MAGNETOMETER
+//#define MAGNETOMETER
 #define GPS
 #define MOTORS
 
@@ -74,13 +80,15 @@ ROVER_STATE current_rover_state;     // Rover state: 0 = groud pre launch, 1 = l
 
 void setup()
 {
-  Wire.begin();
   Serial.begin(9600);
-  delay(1000);
-  
   #ifdef DEBUG
     Serial.print("\n--------------------------------\Starting System!!\n");
   #endif
+  
+  Wire.begin();
+  
+  delay(1000);
+   
   
   // Initialize Barometer
   #ifdef BAROMETER
@@ -137,7 +145,8 @@ void setup()
 void loop()
 {
    //print_magnetometer_data();
-   navigation_routine();
+   print_gps_data();
+   //navigation_routine();
   // Execute current rover state corresponding routine
   //(*rover_state_routines[current_rover_state])(); 
 }

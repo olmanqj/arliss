@@ -42,7 +42,13 @@ static const uint32_t gps_baud = 9600;
 TinyGPSPlus gps;
 
 // The serial connection to the GPS device
+#ifdef FEATHER
+  #define gps_serial Serial1
+#else
 SoftwareSerial gps_serial(gps_rx_pin, gps_tx_pin);
+#endif
+
+
 
 
 double destination_lat;
