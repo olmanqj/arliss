@@ -60,7 +60,7 @@
 #define DEBUG
 //#define BAROMETER
 //#define ACCELGYRO
-//#define MAGNETOMETER
+#define MAGNETOMETER
 #define GPS
 #define MOTORS
 
@@ -84,10 +84,16 @@ void setup()
   #ifdef DEBUG
     Serial.print("\n--------------------------------\Starting System!!\n");
   #endif
+
+  
+   // Turn On Ready_Pin
+  pinMode( 13, OUTPUT);
+  digitalWrite(13, HIGH);
+
   
   Wire.begin();
   
-  delay(1000);
+  delay(50);
    
   
   // Initialize Barometer
@@ -129,13 +135,20 @@ void setup()
    #ifdef MOTORS
     send_message("Initializing Motors");
     init_motors( MOTOR_L_PIN_A, MOTOR_L_PIN_B, MOTOR_L_PIN_ENA, MOTOR_R_PIN_A, MOTOR_R_PIN_B, MOTOR_R_PIN_ENA); 
+    init_solenoid(SOLENOID_PIN_A, SOLENOID_PIN_B);
     send_message("Motors Ready");
   #endif
   
   
   send_message("All Systems Ready");
+
+  // Turn On Ready_Pin
+  pinMode( READY_PIN, OUTPUT);
+  digitalWrite(READY_PIN, HIGH);
+  
   current_rover_state = pre_launch;
-  delay(1000);
+
+
 
 }
 
@@ -144,9 +157,14 @@ void setup()
 
 void loop()
 {
-   //print_magnetometer_data();
-   print_gps_data();
-   //navigation_routine();
+   //solenoid_open();
+  //print_magnetometer_data();
+   //print_gps_data();
+  navigation_routine();
+  while(1)
+  {
+    ;  
+  }
   // Execute current rover state corresponding routine
   //(*rover_state_routines[current_rover_state])(); 
 }
@@ -244,13 +262,25 @@ void *descent_routine()
 void detach_parachute()
 {
   send_message("Detaching parachute");
+
+  int i = 3;
+  while(i--)
+  {
+    solenoid_open();
+    delay(1000);
+    solenoid_close();
+    delay(500);
+    solenoid_open();
+    delay(1000);
   
+    motor_forward();
+    delay(4000);
+    solenoid_close();
+    motor_stop();
+  }
+  solenoid_close();
   
-  
-  
-  
-  
-  delay(2000);  //Wait some seconds for ensure parachute detaching
+  //delay(2000);  //Wait some seconds for ensure parachute detaching
 }
 
 
@@ -266,8 +296,8 @@ void *navigation_routine()
   float distance; // Distance to destination
   
   
-  while(1)
-  //while( ( distance = get_distance_to_dest()) >  DISTANCE_TO_DEST_THRESHOLD)
+  //while(1)
+  while( ( distance = get_distance_to_dest()) >  DISTANCE_TO_DEST_THRESHOLD)
   {
     
     Serial.print( "| Dist:" );
@@ -301,9 +331,9 @@ void *navigation_routine()
     
     
     Serial.print("Forward:");
-    motor_stop();
+
     // If no turn is necessary, go foreward
-    //drive_forward();
+    motor_forward();
   
 
   }

@@ -13,34 +13,39 @@
 //  DEFINES
 ////////////////////////////////////////////////
 
-
-
-
-
 // PINOUT
-#define GPS_RX_PIN         12
-#define GPS_TX_PIN         13
+#define READY_PIN          8
 
 
-#define MOTOR_L_PIN_A      3
+//#define GPS_RX_PIN         12
+//#define GPS_TX_PIN         13
+
+// Motor_L pins: 5,6
+#define MOTOR_L_PIN_A      6
 #define MOTOR_L_PIN_B      5
-#define MOTOR_L_PIN_ENA    6
+#define MOTOR_L_PIN_ENA    NULL
 
-#define MOTOR_R_PIN_A      9
-#define MOTOR_R_PIN_B      10
-#define MOTOR_R_PIN_ENA    11
+//Motor_R pins: 9, 10
+#define MOTOR_R_PIN_A      10
+#define MOTOR_R_PIN_B      9
+#define MOTOR_R_PIN_ENA    NULL
+
+#define SOLENOID_PIN_A      11
+#define SOLENOID_PIN_B      12
 
 
 
 // For Motor Driver
-#define TURN_THRESHOLD    15
+#define TURN_THRESHOLD    20
 #define TURN_DELAY_BASE   200
 
 
 //For GPS Operations
-#define DESTINATION_LAT               9.961898
-#define DESTINATION_LON               -84.065769 
-#define DISTANCE_TO_DEST_THRESHOLD    2
+
+#define DESTINATION_LAT               9.854892
+#define DESTINATION_LON               -83.907433
+
+#define DISTANCE_TO_DEST_THRESHOLD    1
 // Set declination angle on your location and fix heading
 // You can find your declination on: http://magnetic-declination.com/
 // (+) Positive or (-) for negative

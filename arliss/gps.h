@@ -31,10 +31,6 @@
 //  GLOBAL VARIABLES
 /////////////////////////////////////////////////
 
-
-
-static const int gps_rx_pin = GPS_RX_PIN, gps_tx_pin = GPS_TX_PIN;
-
 static const uint32_t gps_baud = 9600;
 
 
@@ -45,6 +41,7 @@ TinyGPSPlus gps;
 #ifdef FEATHER
   #define gps_serial Serial1
 #else
+static const int gps_rx_pin = GPS_RX_PIN, gps_tx_pin = GPS_TX_PIN;
 SoftwareSerial gps_serial(gps_rx_pin, gps_tx_pin);
 #endif
 
@@ -101,6 +98,8 @@ int init_gps(double dest_lat, double dest_lon )
 
 void print_gps_data()
 {
+  if (gps_serial.available()) gps.encode(gps_serial.read());
+  
   Serial.print( "| Lat:" );
   Serial.print( gps.location.lat(), 6 );
   
@@ -137,6 +136,7 @@ float get_lon()
 
 unsigned long get_distance_to_dest()
 {
+  if (gps_serial.available()) gps.encode(gps_serial.read());
   distance_to_dest = (unsigned long)TinyGPSPlus::distanceBetween( gps.location.lat(), gps.location.lng(), destination_lat, destination_lon) ;
   return distance_to_dest;
 }
@@ -144,6 +144,7 @@ unsigned long get_distance_to_dest()
 
 long get_course_to_dest()
 {
+    if (gps_serial.available()) gps.encode(gps_serial.read());
     course_to_dest =    TinyGPSPlus::courseTo( gps.location.lat(), gps.location.lng(), destination_lat, destination_lon);
     return course_to_dest;
 }
