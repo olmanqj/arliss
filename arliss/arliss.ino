@@ -16,7 +16,7 @@
 #if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
   #define FEATHER
   // Required for Serial on Zero based boards
-  //#define Serial SERIAL_PORT_USBVIRTUAL
+  #define Serial SERIAL_PORT_USBVIRTUAL
 #endif
 
 
@@ -58,8 +58,8 @@
 ////////////////////////////////////////////////
 // For Debugging
 #define DEBUG
-//#define BAROMETER
-//#define ACCELGYRO
+#define BAROMETER
+#define ACCELGYRO
 #define MAGNETOMETER
 #define GPS
 #define MOTORS
@@ -86,7 +86,7 @@ void setup()
   #endif
 
   
-   // Turn On Ready_Pin
+  // Turn On Starting_Pin
   pinMode( 13, OUTPUT);
   digitalWrite(13, HIGH);
 
@@ -142,14 +142,16 @@ void setup()
   
   send_message("All Systems Ready");
 
+  // Turn Off Starting_Pin
+  pinMode( 13, OUTPUT);
+  digitalWrite(13, LOW);
+
+
   // Turn On Ready_Pin
   pinMode( READY_PIN, OUTPUT);
   digitalWrite(READY_PIN, HIGH);
   
   current_rover_state = pre_launch;
-
-
-
 }
 
 
@@ -157,16 +159,8 @@ void setup()
 
 void loop()
 {
-   //solenoid_open();
-  //print_magnetometer_data();
-   //print_gps_data();
-  navigation_routine();
-  while(1)
-  {
-    ;  
-  }
   // Execute current rover state corresponding routine
-  //(*rover_state_routines[current_rover_state])(); 
+  (*rover_state_routines[current_rover_state])(); 
 }
 
 
@@ -196,6 +190,7 @@ void *pre_launch_routine()
     }
     //Send a message every 3 sec
     if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Waiting for launch");
+
     
     // Check watchdog termination
     if(check_watchdog() == EXIT_FAILURE) current_rover_state = ascent;
@@ -211,15 +206,7 @@ void *ascent_routine()
   send_message("Rove_status: ascent");
   unsigned long last_time_executed= millis();   //For time counting
   while(current_rover_state == ascent)
-  {
-      /*
-      Serial.print("Relative:");
-      Serial.print(get_relative_altitude() );
-      Serial.print("\tMax relative:");
-      Serial.println(max_relative_altitude );
-      print_barometer_data();
-      */
-    
+  {    
     // If Relative Altitude < Max relative Altitude, Apoapsis detection!!
     if( (get_relative_altitude() + APOAPSIS_DETECTION_THRESHOLD)  < max_relative_altitude)
     {  
@@ -227,6 +214,7 @@ void *ascent_routine()
       current_rover_state = descent; // End the ascent_routine
       break;
     }
+
     //Send a message every 3 sec
     if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Ascending");
   } 
@@ -250,6 +238,7 @@ void *descent_routine()
       current_rover_state = navigation; // End the descent_routine
       break;
     }
+
     //Send a message every 3 sec
     if(every_x_seconds(3, &last_time_executed) == EXIT_SUCCESS) send_message("Descending");
   } 
@@ -267,20 +256,22 @@ void detach_parachute()
   while(i--)
   {
     solenoid_open();
-    delay(1000);
+    gps_delay(1000);
     solenoid_close();
-    delay(500);
+    
+    gps_delay(500);
+    
     solenoid_open();
-    delay(1000);
+    gps_delay(1000);
   
     motor_forward();
-    delay(4000);
+    gps_delay(4000);
     solenoid_close();
     motor_stop();
   }
   solenoid_close();
   
-  //delay(2000);  //Wait some seconds for ensure parachute detaching
+  gps_delay(1000);  //Wait some seconds for ensure parachute detaching
 }
 
 
@@ -288,11 +279,11 @@ void detach_parachute()
 void *navigation_routine()
 {
   send_message("Rove_status: navigation");
-  detach_parachute();
+   detach_parachute();
   
   float current_lat, current_lon;
   float turn;
-  
+  float rover_heading;
   float distance; // Distance to destination
   
   
@@ -309,29 +300,21 @@ void *navigation_routine()
     Serial.print( course_to_dest );
   
     Serial.print("| current heading: ");
-    float rover_heading = get_heading() ;
+    rover_heading = get_heading() ;
     Serial.print( rover_heading );
     
     Serial.print("| turn: ");
     turn = calculate_turn( rover_heading, course_to_dest);
     Serial.println(turn);
-    //gps_delay(1000);
-    
     
     while (turn !=  0)
     {
-       Serial.print("Turn:");
-       Serial.println(turn);
-      
       motor_turn(turn);
       // Refresh turn
       turn = calculate_turn( get_heading(), get_course_to_dest());
       gps_delay(100);
     }
     
-    
-    Serial.print("Forward:");
-
     // If no turn is necessary, go foreward
     motor_forward();
   
@@ -352,6 +335,9 @@ void *navigation_routine()
 void *closing_up_routine()
 {
   send_message("Rove_status: closing_up");
+
+  motor_forward();
+  delay(3000);
   
   current_rover_state = end_navigation;
 }

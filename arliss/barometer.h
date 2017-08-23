@@ -80,15 +80,19 @@ void print_barometer_data()
 ////////////////// SET UP FUNCTIONS ///////////////////////////////////////
 int init_barometer()
 {
-  if(!barometer.begin()) return EXIT_FAILURE;
+  if(!barometer.begin(MS5611_ULTRA_HIGH_RES)) return EXIT_FAILURE;
+
+    // Check settings
+  barometer.getOversampling();  
 
   // Get reference pressure for relative altitude
   referencePressure = barometer.readPressure();
-  // Check settings
-  barometer.getOversampling();	
+
+      // Check settings
+  barometer.getOversampling();  
   
   // Set ground altitude
-  ground_altitude = get_altitude() ;
+  ground_altitude = get_altitude();
   return EXIT_SUCCESS;
 }
 
@@ -106,9 +110,11 @@ double get_temperature()
 ///////////////////////// ATLTITUDE FUNCTIONS /////////////////////////////////////////////////
 float get_altitude() 
 {
+  
   long temp_pressure = barometer.readPressure();
   // Calculate altitude
   float temp_altitude = barometer.getAltitude(temp_pressure);
+
   if(temp_altitude > max_altitude) max_altitude = temp_altitude;  // Set Max altitude when needed
   return temp_altitude; 
 }

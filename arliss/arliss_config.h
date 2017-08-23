@@ -60,10 +60,10 @@
 
 
 //For Barometer
-#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 1    //Relative altitude for detect launch
+#define ALTITUDE_LAUNCH_DETECTION_THRESHOLD 2    //Relative altitude for detect launch
 #define APOAPSIS_DETECTION_THRESHOLD 2           //Threshold between relative altitude and max altitude 
 #define ALTITUDE_LNADING_DETECTION_THRESHOLD 2   //Relative altitude for detect landing
-#define DELAY_BEFOR_NAVIGATION_START 10000       //Time between descente ends and starts navigation
+#define DELAY_BEFOR_NAVIGATION_START 30000       //Time between descente ends and starts navigation
 
 
 
